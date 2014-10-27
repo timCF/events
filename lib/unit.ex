@@ -16,21 +16,21 @@ defmodule Events.Unit do
 		Logger.info "Event initialized! #{inspect state}"
 		{:ok, state, get_sleeptime(state)}
 	end
-	definfo :timeout, state: state = %Events.State{callback: callback, period: 0, stamp: 0, repeat: repeat} do
+	definfo :timeout, state: state = %Events.State{callback: callback, period: 0, stamp: 0, repeat: repeat, user_state: user_state} do
 		Logger.debug "Event : callback by accurate_time! #{inspect state}"
-		callback.()
+		new_state = HashUtils.set(state, :user_state, callback.(user_state))
 		case repeat do
-			:permanent -> {:noreply, state, get_sleeptime(state)}
+			:permanent -> 	{ :noreply, new_state, get_sleeptime(state) }
 			:once -> 	Logger.warn "Event : called ounce, will terminate!"
-						{:stop, :normal, state}
+						{ :stop, :normal, new_state }
 		end
 	end
-	definfo :timeout, state: state = %Events.State{callback: callback, repeat: repeat} do
+	definfo :timeout, state: state = %Events.State{callback: callback, repeat: repeat, user_state: user_state} do
 		Logger.debug "Event : callback by period! #{inspect state}"
-		callback.()
 		new_state = HashUtils.set(state, :stamp, Exutils.makestamp)
+						|> HashUtils.set(:user_state, callback.(user_state))
 		case repeat do
-			:permanent -> {:noreply, new_state, get_sleeptime(new_state)}
+			:permanent -> 	{ :noreply, new_state, get_sleeptime(new_state) }
 			:once -> 	Logger.warn "Event : called ounce, will terminate!"
 						{:stop, :normal, new_state}
 		end
@@ -47,18 +47,14 @@ defmodule Events.Unit do
 			_ -> 0
 		end
 	end
-	defp get_sleeptime(%Events.State{period: 0, stamp: 0, accurate_time: lst}) when is_list(lst) do
+	defp get_sleeptime(%Events.State{period: 0, stamp: 0, accurate_time: acct = %Events.AccurateTime{}}) do
 		nowsec = :os.timestamp |> :calendar.now_to_datetime |>  :calendar.datetime_to_gregorian_seconds
-		case Enum.map(lst, fn(el) -> %State{datetime: el, field: get_field_maybe_to_increment(el), nowsec: nowsec} end)
-				|> Enum.map( fn(el) -> HashUtils.modify(el, :datetime, &set_needed_fields/1) end )
-					|> Enum.map( fn(el) -> HashUtils.modify(el, :datetime, &fix_day_in_need/1) end )
-						|> Enum.map( &maybe_increment/1 )
-							|> Enum.filter(&( &1 >= nowsec ))  do
-			[] -> :hibernate
-			new_lst -> case (Enum.sort(new_lst) |> List.first) - nowsec do
-							some when (some > 0) -> :timer.seconds(some)
-							_ -> 0
-						end
+		case %State{datetime: acct, field: get_field_maybe_to_increment(acct), nowsec: nowsec}
+				|> HashUtils.modify(:datetime, &set_needed_fields/1)
+					|> HashUtils.modify(:datetime, &fix_day_in_need/1)
+						|> maybe_increment do
+			nil -> :hibernate
+			awake_in -> :timer.seconds(awake_in - nowsec) |> IO.inspect
 		end
 	end
 	defp set_needed_fields(input) do
@@ -88,14 +84,20 @@ defmodule Events.Unit do
 			end )
 	end
 
-	defp maybe_increment(%State{datetime: datetime, field: nil}) do
-		datetime_to_seconds(datetime)
+	defp maybe_increment(%State{datetime: datetime, field: nil, nowsec: nowsec}) do
+		case datetime_to_seconds(datetime) do
+			num when (num >= nowsec) -> num
+			_ -> nil
+		end
 	end
 	defp maybe_increment(%State{datetime: datetime, field: field, nowsec: nowsec}) do
 		case datetime_to_seconds(datetime) do
 			res when (res > nowsec) -> res
-			_ -> increment_proc(datetime, field)
-					|> datetime_to_seconds
+			_ -> case increment_proc(datetime, field)
+						|> datetime_to_seconds do
+					num when (num > nowsec) -> num
+					_ -> 	raise "Events : got incorrect num after increment!"
+				end
 		end
 	end
 

@@ -35,7 +35,8 @@ defmodule Events do
               period: 0,
               stamp: 0,
               accurate_time: nil,
-              callback: nil
+              callback: nil,
+              user_state: nil
   end
 
   use Events.Body

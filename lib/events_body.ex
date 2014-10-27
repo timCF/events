@@ -7,10 +7,12 @@ defmodule Events.Body do
 			### public ###
 			##############
 
-			defmacro new(opts, [do: body]) do
-				quote do
-					Events.new_body(unquote(opts), fn() -> unquote(body) end)
-				end
+			def new(opts, callback) when ( is_map(opts) and is_function(callback, 1) ) do
+				get_execute_strategy(opts)
+					|> get_repeat_strategy(opts)
+						|> HashUtils.set(:callback, callback)
+							|> HashUtils.set(:user_state, HashUtils.get(opts, :state))
+								|> create_event_process
 			end
 			def delete(eventid) when is_binary(eventid) do
 				:pg2.get_members("__my_events__")
@@ -23,20 +25,12 @@ defmodule Events.Body do
 
 			@fields [:year, :month, :day, :hour, :minute, :sec]
 
-			def new_body(opts, callback) when ( is_map(opts) and is_function(callback) ) do
-				get_execute_strategy(opts)
-					|> get_repeat_strategy(opts)
-						|> HashUtils.set(:callback, callback)
-							|> create_event_process
-			end
-
-
 			defp get_execute_strategy(opts) do
 				case HashUtils.get(opts, [:execute_strategy]) do
 					num when ( is_integer(num) and num > 0 ) -> %Events.State{eventid: Exutils.makecharid, period: num, stamp: Exutils.makestamp}
 					_ -> case HashUtils.get(opts, [:execute_strategy]) do
-							[] -> raise "Events : No any execute strategy."
-							lst when is_list(lst) -> %Events.State{eventid: Exutils.makecharid, accurate_time: Enum.map(lst, &get_accurate_time/1 )}
+							map when is_map(map) -> %Events.State{eventid: Exutils.makecharid, accurate_time: get_accurate_time(map)}
+							_ -> raise "Events : No any valid execute strategy."
 						end
 				end
 			end
