@@ -17,29 +17,31 @@ defmodule Events.Unit do
 		{:ok, state, get_sleeptime(state)}
 	end
 	definfo :timeout, state: state = %Events.State{callback: callback, period: 0, stamp: 0, repeat: repeat, user_state: user_state} do
-		Logger.debug "Event : callback by accurate_time! #{inspect state}"
-		new_state = HashUtils.set(state, :user_state, callback.(user_state))
+		#Logger.debug "Event : callback by accurate_time! #{inspect state}"
+		new_state = HashUtils.set(state, :user_state, execute_callback(callback, user_state) )
 		case repeat do
 			:permanent -> 	{ :noreply, new_state, get_sleeptime(state) }
-			:once -> 	Logger.warn "Event : called ounce, will terminate!"
+			:once -> 	#Logger.warn "Event : called ounce, will terminate!"
 						{ :stop, :normal, new_state }
 		end
 	end
 	definfo :timeout, state: state = %Events.State{callback: callback, repeat: repeat, user_state: user_state} do
-		Logger.debug "Event : callback by period! #{inspect state}"
+		#Logger.debug "Event : callback by period! #{inspect state}"
 		new_state = HashUtils.set(state, :stamp, Exutils.makestamp)
-						|> HashUtils.set(:user_state, callback.(user_state))
+						|> HashUtils.set(:user_state, execute_callback(callback, user_state))
 		case repeat do
 			:permanent -> 	{ :noreply, new_state, get_sleeptime(new_state) }
-			:once -> 	Logger.warn "Event : called ounce, will terminate!"
+			:once -> 	#Logger.warn "Event : called ounce, will terminate!"
 						{:stop, :normal, new_state}
 		end
 	end
 	definfo %Events.Message{eventid: eventid, subject: "delete"}, state: state = %Events.State{eventid: eventid} do
-		Logger.warn "Event : got delete signal, terminate!"
+		Logger.warn "Event : got delete signal, terminate! #{inspect eventid}"
 		{:stop, :normal, state}
 	end
-
+	definfo %Events.Message{subject: "delete"}, state: state = %Events.State{} do
+		{:noreply, state, get_sleeptime(state)}
+	end
 
 	defp get_sleeptime(%Events.State{period: period, stamp: stamp, accurate_time: nil}) do
 		case (period - (Exutils.makestamp - stamp)) do
@@ -54,7 +56,7 @@ defmodule Events.Unit do
 					|> HashUtils.modify(:datetime, &fix_day_in_need/1)
 						|> maybe_increment do
 			nil -> :hibernate
-			awake_in -> :timer.seconds(awake_in - nowsec) |> IO.inspect
+			awake_in -> :timer.seconds(awake_in - nowsec)
 		end
 	end
 	defp set_needed_fields(input) do
@@ -145,6 +147,13 @@ defmodule Events.Unit do
 			:minute -> minute
 			:sec -> sec
 		end
+	end
+
+
+	defp execute_callback(callback, state) do
+		{:result, new_state} = ExTask.run( fn() -> callback.(state) end ) 
+								|> ExTask.await(:infinity)
+		new_state
 	end
 
 end

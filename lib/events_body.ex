@@ -118,7 +118,7 @@ defmodule Events.Body do
 
 
 			defp create_event_process(state = %Events.State{eventid: eventid}) do
-				:ok = :supervisor.start_child( Events.Supervisor, Supervisor.Spec.worker(Events.Unit, [state], [id: eventid,  restart: :transient]))|> IO.inspect |> elem(0)
+				:ok = :supervisor.start_child( Events.Supervisor, Supervisor.Spec.worker(Events.Unit, [state], [id: eventid,  restart: :transient])) |> elem(0)
 				eventid
 			end
 
