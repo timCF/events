@@ -1,11 +1,11 @@
 defmodule Events.Unit do
 	use ExActor.GenServer
 	require Logger
+	require Exutils
 	@fields [:year, :month, :day, :hour, :minute, :sec]
 	@new_fields_values %{month: 1, day: 1, hour: 0, minute: 0, sec: 0}
 
 	defmodule State do
-		@derive [HashUtils]
 		defstruct 	datetime: nil,
 					field: nil,
 					nowsec: nil
@@ -151,9 +151,10 @@ defmodule Events.Unit do
 
 
 	defp execute_callback(callback, state) do
-		{:result, new_state} = ExTask.run( fn() -> callback.(state) end ) 
-								|> ExTask.await(:infinity)
-		new_state
+		case callback.(state) |> Exutils.safe do
+			{:exit, reason} -> raise "#{__MODULE__} : can't apply callback to state in event #{inspect(reason)}"
+			new_state -> new_state
+		end
 	end
 
 end

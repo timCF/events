@@ -1,4 +1,4 @@
 %{"exactor": {:git, "git://github.com/sasa1977/exactor.git", "0467f8100bc735405d597dbf94996195eb31e0b6", []},
   "extask": {:git, "git://github.com/timCF/extask.git", "4164dddf3135c44623d77e9cba07324595353d6b", []},
-  "exutils": {:git, "git://github.com/timCF/exutils.git", "8cdc6adcbaa5ea473c7172c83906b6e83cf3a4c6", []},
-  "hashex": {:git, "git://github.com/timCF/hashex.git", "e657aac2f6dac000fa940b884e955cbd099009f4", []}}
+  "exutils": {:git, "git://github.com/timCF/exutils.git", "58e0a1a9986558c6a05f34e2e38f62d44a8a4a1b", []},
+  "hashex": {:git, "git://github.com/timCF/hashex.git", "cc6b4307daa1ab18c94cdd33bf3cb8a3dab28b96", []}}

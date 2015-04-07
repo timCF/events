@@ -14,9 +14,7 @@ defmodule Events.Mixfile do
   def application do
     [applications:  [
                       :logger,
-                      :extask,
                       :exactor,
-
                       :exutils,
                       :hashex
                     ],
@@ -34,9 +32,7 @@ defmodule Events.Mixfile do
   # Type `mix help deps` for more examples and options
   defp deps do
     [
-      {:extask, github: "timCF/extask"},
       {:exactor, github: "sasa1977/exactor"},
-
       {:exutils, github: "timCF/exutils"},
       {:hashex, github: "timCF/hashex"}
     ]

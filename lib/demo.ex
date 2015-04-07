@@ -1,6 +1,5 @@
-defmodule Some do
-	require Events
-	def demo do
+defmodule Events.Demo do
+	def go do
 		#Events.new(%{execute_strategy: 10000}) do
 		#	IO.puts "HELLO"
 		#end
