@@ -1,4 +1,6 @@
 %{"exactor": {:git, "git://github.com/sasa1977/exactor.git", "0467f8100bc735405d597dbf94996195eb31e0b6", []},
   "extask": {:git, "git://github.com/timCF/extask.git", "4164dddf3135c44623d77e9cba07324595353d6b", []},
-  "exutils": {:git, "git://github.com/timCF/exutils.git", "58e0a1a9986558c6a05f34e2e38f62d44a8a4a1b", []},
-  "hashex": {:git, "git://github.com/timCF/hashex.git", "cc6b4307daa1ab18c94cdd33bf3cb8a3dab28b96", []}}
+  "exutils": {:git, "git://github.com/timCF/exutils.git", "97dcc4c6f1d679ae77f8203ee8ba2dafa6c871c0", []},
+  "hashex": {:git, "git://github.com/timCF/hashex.git", "cc6b4307daa1ab18c94cdd33bf3cb8a3dab28b96", []},
+  "quickrand": {:hex, :quickrand, "1.5.2-rc1", "1345b1652dadc520692ee55f4d996d74d399a86c0265b53a24c8540803929cb4", [:rebar], []},
+  "uuid": {:git, "git://github.com/okeuday/uuid.git", "fdd2861e2f5049c25d44ff342c9756ce64a2a783", []}}
